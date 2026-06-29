@@ -1,0 +1,45 @@
+{
+  "name": "clean-lecture-notes",
+  "version": "1.0.0",
+  "description": "Clean lecture transcripts and generate courseware-aligned study notes for Codex.",
+  "author": {
+    "name": "wujihang",
+    "url": "https://github.com/ljim17502-hub"
+  },
+  "homepage": "https://github.com/ljim17502-hub/clean-lecture-notes-skill",
+  "repository": "https://github.com/ljim17502-hub/clean-lecture-notes-skill",
+  "license": "MIT",
+  "keywords": [
+    "codex-skill",
+    "agent-skills",
+    "lecture-notes",
+    "transcript-cleanup",
+    "meeting-transcript",
+    "study-notes",
+    "feishu",
+    "lark",
+    "mermaid-mindmap",
+    "ai-product-manager",
+    "markdown"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Clean Lecture Notes",
+    "shortDescription": "Clean transcripts into study notes",
+    "longDescription": "Clean noisy lecture or meeting transcripts, align them with courseware, and produce review-ready study notes with Mermaid mindmaps, active recall, source audits, and optional Feishu/Lark writeback.",
+    "developerName": "wujihang",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/ljim17502-hub/clean-lecture-notes-skill",
+    "defaultPrompt": [
+      "Clean this lecture transcript into study notes.",
+      "Turn this Feishu transcript into review notes.",
+      "Align this transcript with courseware."
+    ],
+    "brandColor": "#2563EB",
+    "screenshots": []
+  }
+}

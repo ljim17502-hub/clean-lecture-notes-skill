@@ -1,0 +1,4 @@
+interface:
+  display_name: "Clean Lecture Notes"
+  short_description: "Clean transcripts into review-ready study notes"
+  default_prompt: "Use $clean-lecture-notes to clean this lecture transcript and generate courseware-aligned study notes."
