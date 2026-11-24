@@ -84,6 +84,22 @@ class CheckNoteArtifactsTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_final_note_accepts_teacher_as_a_neutral_noun(self) -> None:
+        note = VALID_FINAL_NOTE + "\n## 课堂角色\n老师是课堂教学中的角色之一。\n"
+
+        result = self.run_checker(note, "--final-note")
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_final_note_rejects_teacher_narration_on_its_own(self) -> None:
+        note = VALID_FINAL_NOTE + "\n## 核对事项\n老师提到这里要核对。\n"
+
+        result = self.run_checker(note, "--final-note")
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("旁观者视角", result.stdout)
+        self.assertIn("老师提到", result.stdout)
+
     def test_clean_transcript_can_keep_teacher_and_pending(self) -> None:
         transcript = "老师提到这里待确认，后面需要按课件再核对。"
 
