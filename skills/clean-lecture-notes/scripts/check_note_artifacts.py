@@ -20,6 +20,10 @@ def has_any(text: str, patterns: list[str]) -> bool:
     return any(re.search(pattern, text, re.IGNORECASE | re.MULTILINE) for pattern in patterns)
 
 
+AUDIT_SECTION = "资料来源与质量审计"
+AUDIT_SOURCE_REFERENCE = r"(?:录音里|转写稿里|原稿里)(?:说|提到|出现|记录|写着)?"
+SOURCE_NARRATION = r"(?:课程|课堂|录音|原文|原稿).{0,12}(?:讲了|说了|提到|展示|播放|出现|附带)"
+
 OBSERVER_VOICE_PATTERNS: list[tuple[str, str]] = [
     (
         r"老师(?:说|讲|解释|播放|提到|提醒|展示|强调|安排|给出|认为|总结|让|列出|建议|测试|举例)?",
@@ -34,7 +38,7 @@ OBSERVER_VOICE_PATTERNS: list[tuple[str, str]] = [
         "改成“这个案例说明...”或“实践时要注意...”。",
     ),
     (
-        r"(?:录音里|转写稿里|原稿里)(?:说|提到|出现|记录|写着)?",
+        AUDIT_SOURCE_REFERENCE,
         "把来源过程放到资料审计，不放进正文叙述。",
     ),
     (
@@ -50,7 +54,7 @@ OBSERVER_VOICE_PATTERNS: list[tuple[str, str]] = [
         "改成模块关系，例如“项目文档体系包括...”。",
     ),
     (
-        r"(?:课程|课堂|录音|原文|原稿).{0,12}(?:讲了|说了|提到|展示|播放|出现|附带)",
+        SOURCE_NARRATION,
         "改成学习者结论，不写“谁/哪里讲了什么”。",
     ),
     (
@@ -64,11 +68,63 @@ def line_number_for(text: str, offset: int) -> int:
     return text.count("\n", 0, offset) + 1
 
 
-def find_observer_voice_hits(text: str) -> list[tuple[int, str, str]]:
+def markdown_headings(text: str):
+    fence = ""
+    offset = 0
+    for line in text.splitlines(keepends=True):
+        marker = re.match(r" {0,3}(\x60{3,}|~{3,})(.*)", line)
+        if fence:
+            if (marker and marker[1][0] == fence[0] and len(marker[1]) >= len(fence)
+                    and not marker[2].strip()):
+                fence = ""
+        elif marker:
+            fence = marker[1]
+        else:
+            heading = re.match(r" {0,3}(#{1,6})[ \t]+(.*)", line)
+            if heading:
+                title = re.sub(r"[ \t]+#+[ \t]*$", "", heading[2]).strip()
+                yield offset, offset + len(line), len(heading[1]), title
+        offset += len(line)
+
+
+def xml_headings(text: str):
+    # Match Feishu heading blocks, including adjacent tags on a single line.
+    blocks = re.compile(
+        r"<!--.*?-->|<!\[CDATA\[.*?\]\]>|<h([1-6])(?:\s+[^<>]*)?>(.*?)</h\1\s*>",
+        re.DOTALL | re.IGNORECASE,
+    )
+    for heading in blocks.finditer(text):
+        if heading[1]:
+            title = re.sub(r"<[^>]+>", "", heading[2]).strip()
+            yield heading.start(), heading.end(), int(heading[1]), title
+
+
+def audit_spans(text: str, *, xml: bool):
+    headings = xml_headings(text) if xml else markdown_headings(text)
+    start, audit_level = None, 0
+    for position, end, level, title in headings:
+        if start is not None and level <= audit_level:
+            yield start, position
+            start = None
+        if start is None and title == AUDIT_SECTION:
+            start, audit_level = end, level
+    if start is not None:
+        yield start, len(text)
+
+
+def find_observer_voice_hits(text: str, *, xml: bool = False) -> list[tuple[int, str, str]]:
     hits: list[tuple[int, str, str]] = []
+    spans = list(audit_spans(text, xml=xml))
     for pattern, hint in OBSERVER_VOICE_PATTERNS:
         for match in re.finditer(pattern, text, re.IGNORECASE | re.MULTILINE):
             value = match.group(0).strip()
+            source_narration = pattern == AUDIT_SOURCE_REFERENCE or (
+                pattern == SOURCE_NARRATION and value.startswith(("录音", "原文", "原稿"))
+            )
+            if source_narration and any(
+                start <= match.start() and match.end() <= end for start, end in spans
+            ):
+                continue
             if value:
                 hits.append((line_number_for(text, match.start()), value, hint))
     return hits
@@ -104,7 +160,8 @@ def main() -> int:
             print(f"  - {item}")
         return 2
 
-    text = "\n\n".join(read_text(path) for path in files)
+    documents = [(path, read_text(path)) for path in files]
+    text = "\n\n".join(content for _, content in documents)
     normalized = re.sub(r"\s+", " ", text)
 
     blank_whiteboard = "<whiteboard type=" + '"blank"' + "></whiteboard>"
@@ -147,7 +204,17 @@ def main() -> int:
     for pattern in broken_heading_patterns:
         broken_headings.extend(re.findall(pattern, text, re.MULTILINE))
 
-    observer_voice_hits = find_observer_voice_hits(text) if args.final_note else []
+    observer_voice_hits = []
+    if args.final_note:
+        line_offset = 0
+        for path, content in documents:
+            observer_voice_hits.extend(
+                (number + line_offset, value, hint)
+                for number, value, hint in find_observer_voice_hits(
+                    content, xml=path.suffix.lower() == ".xml"
+                )
+            )
+            line_offset += content.count("\n") + 2
 
     ok = (
         not banned_hits
