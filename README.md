@@ -4,9 +4,11 @@
 [![Codex Skill](https://img.shields.io/badge/Codex-Skill-blue)](skills/clean-lecture-notes/SKILL.md)
 [![Agent Skills](https://img.shields.io/badge/Agent-Skills-green)](https://agentskills.io)
 
-Clean noisy lecture transcripts, meeting transcripts, class recordings, Feishu/Lark docs, and local ASR output into courseware-aligned study notes for Codex.
+Turn a noisy lecture transcript into a clean transcript and study notes you can review. This Codex skill preserves assignments, numbers, and uncertainty, then organizes the material into conclusions, recall questions, and a Mermaid mindmap.
 
-This repository packages a reusable **Codex skill** for transcript cleanup, lecture notes, study notes, Mermaid mindmaps, active recall, and optional Feishu/Lark writeback. It is designed for students, AI product managers, educators, course creators, and knowledge workers who want review-ready notes instead of raw ASR text.
+**先看效果 / Preview without installing:** [Noisy transcript 原稿](examples/noisy-transcript.md) → [Cleaned transcript 清洗稿](examples/cleaned-transcript.md) → [Study notes 复习笔记](examples/study-notes-outline.md). The synthetic sample keeps the assignment to find and test **three** skills. No Feishu account or real class recording is needed for this example.
+
+[Install in Codex](#install) · [Try the sample prompt](#try-the-sample-in-codex)
 
 ## What It Does
 
@@ -19,25 +21,7 @@ This repository packages a reusable **Codex skill** for transcript cleanup, lect
 
 ## 中文快速上手
 
-这个 Skill 用来把课堂录音转文字、飞书文档逐字稿、本地 ASR 文本、会议转写稿，清洗成可复习的学习笔记。
-
-它特别适合：
-
-- 清洗录音转文字
-- 整理上课录音
-- 把逐字稿和课件做成复习笔记
-- 生成带思维导图、主动回忆问题、核心结论的中文课堂笔记
-- 写回飞书或输出本地 Markdown
-
-示例提示词：
-
-```text
-Use $clean-lecture-notes to clean this lecture transcript and generate courseware-aligned study notes.
-```
-
-```text
-使用 $clean-lecture-notes 清洗这份课堂逐字稿，并结合课件整理成适合复习的中文学习笔记。
-```
+已有课堂逐字稿时，可以直接生成两个 Markdown 文件：清洗稿和复习笔记，保留原稿、作业和关键数字。飞书是可选项；如果手上只有音视频，需要先用环境里可用的工具转录。
 
 ## Install
 
@@ -49,7 +33,7 @@ mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
 cp -R clean-lecture-notes-skill/skills/clean-lecture-notes "${CODEX_HOME:-$HOME/.codex}/skills/"
 ```
 
-Restart Codex so it reloads skill metadata.
+Restart Codex so it reloads skill metadata, then open the cloned `clean-lecture-notes-skill` folder as your workspace.
 
 ### Option 2: Use as a Skill-only Codex Plugin
 
@@ -61,47 +45,22 @@ git clone https://github.com/ljim17502-hub/clean-lecture-notes-skill.git
 
 Then install or load it using your Codex plugin workflow.
 
-## Usage
+## Try the sample in Codex
 
-Ask Codex naturally, or mention the skill explicitly:
-
-```text
-Use $clean-lecture-notes to clean this transcript. Preserve assignments and uncertain terms.
-```
+After installing, open this repository in Codex and paste:
 
 ```text
-Use $clean-lecture-notes to turn this Feishu/Lark transcript and courseware into review notes with a Mermaid mindmap.
+Use $clean-lecture-notes on examples/noisy-transcript.md.
+Create a cleaned transcript and study notes as new local Markdown files.
+Keep the source unchanged, preserve the three-skill assignment, and do not use Feishu/Lark.
 ```
 
 ```text
-使用 $clean-lecture-notes，把这份录音转文字清洗成清洗稿，再生成学习者视角的复习笔记。
+使用 $clean-lecture-notes 处理 examples/noisy-transcript.md。
+新建本地 Markdown 清洗稿和复习笔记，保留原稿和「找三个 Skill」的作业，不使用飞书。
 ```
 
-## Example
-
-Input:
-
-```text
-Teacher: um today we talk about MCP, right, MCP lets the AI connect tools.
-Teacher: and then, and then skill is different, skill is like the workflow.
-Student: so if I already have MCP do I still need skills?
-```
-
-Output shape:
-
-```markdown
-## Core Conclusion
-
-**MCP answers "what can the agent access"; Skills answer "how should the agent complete the task."**
-
-## Active Recall
-
-1. What problem does MCP solve?
-2. What problem does a Skill solve?
-3. Why do reusable workflows need validation?
-```
-
-See [`examples/`](examples/) for a privacy-safe mini input and output.
+Compare your result with the [checked-in examples](examples/). Wording may vary; check that the source is unchanged and that the assignment is still present.
 
 ## Repository Layout
 
